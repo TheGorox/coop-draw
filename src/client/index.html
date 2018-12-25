@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8">
+            <title>
+                Рисовалка имени Ща
+            </title>
+        </meta>
+    </head>
+</html>
+<script src="jquery-3.3.1.min.js">
+</script>
+<link href="hermes.ttf" rel="stylesheet" type="text/css"/>
+<style>
+    *{
+                padding: 0;
+                margin: 0;
+                font-family: 'hermes', arial;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+            }
+            html, body{
+                height: 100%;
+                width: 100%;
+                overflow: hidden;
+            }
+            #chatPos{
+                position: absolute;
+                width: 350px;
+                height: 200px;
+                right: 20px;
+                bottom: 20px;
+                background-color: #FACB5C;
+                border-radius: 5px;
+                padding: 5px;
+                z-index: 6;
+            }
+            #log{
+                height: 173px;
+                background-color: white;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+            #send{
+                height: 23px;
+                bottom: 5px;
+                position: absolute;
+            }
+            .nick{
+                padding: 3px;
+            }
+            .msg{
+                padding: 3px;
+                word-wrap: break-word;
+            }
+            #nickQuery{
+                background-color: rgba(0, 0, 0, .8);
+                z-index: 666;
+            }
+            .big{
+                width: 100%;
+                height: 100%;
+                position: absolute;
+            }
+            #nickQueryContainer{
+                width: 400px;
+                height: 100px;
+                background-color: white;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                margin: -50px 0 0 -200px;
+                border-radius: 5px;
+                border-color: gray;
+            }
+            #waitPos{
+                background-color: #212121;
+                z-index: 9999;
+            }
+            #waitBody{
+                font-family: 'hermes', arial;
+                line-height: 300px;
+                text-align: center;
+                width: 300px;
+                height: 300px;
+                color: white;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                margin: -150px 0 0 -150px;
+            }
+            #chooseBody{
+                background-color: lightgray;
+                text-align: center;
+                width: 300px;
+                min-height: 100px;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                margin: -150px 0 0 -150px;
+            }
+            #exist{
+                line-height: 100px;
+                height: 100px;
+            }
+            #createTable, #create{
+                min-height: 200px;
+                width: 100%;
+            }
+            #createTable>tbody>tr{
+                width: 100%;
+                height: 30px;
+            }
+            #grid{
+                position: absolute;
+                opacity: .5;
+                top: 0;
+                left: 0;
+                z-index: 1;
+                width: 110vw;
+                height: 110vh;
+                pointer-events: none;
+                background-image: linear-gradient(to right, #aaa 1px, transparent 1px), linear-gradient(to bottom, #aaa 1px, transparent 1px);
+            }
+            #workspace{
+                width: 100%;
+                height: 100%;
+                position: absolute;
+                z-index: 5;
+                background-color: white;
+            }
+            #hi{
+                position: absolute;
+                bottom: 0;
+                z-index: 6;
+                pointer-events: none;
+            }
+            #art, #artZoom, #artMove{
+                width: 100%;
+            }
+            #art{
+                z-index: 0;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background-color: #C6C6C6;
+            }
+            #artZoom{
+                flex: 0 0 0px;
+            }
+            #leftPanel, #rightPanel{
+                position: absolute;
+                height: 100%;
+                width: 164px;
+                background-color: #F0F0F0;
+                z-index: 4
+            }
+            #leftPanel{
+                left: 0;
+                border-right: 1px solid #A0A0A0;
+            }
+            #rightPanel{
+                right: 0;
+                border-left: 1px solid #A0A0A0;
+            }
+            #topPanel{
+                z-index: 5;
+                height: 34px;
+                position: absolute;
+                background-color: #F0F0F0;
+                height: 52px;
+                width: 100%;
+                border-bottom: 1px solid #A0A0A0;
+            }
+            .side{
+                margin-top: 53px;
+                height: 100%;
+                width: 100%;
+            }
+            #layers{
+                height: 145px;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+            .bottomHr{
+                width: 154px;
+                height: 1px;
+                background-color: #A0A0A0;
+                text-align: center;
+                bottom: 0;
+                margin-left: 5px;
+            }
+            .layerbutton{
+                width: 18px;
+                align-content: flex-start;
+                height: 18px;
+                margin: 1px;
+                background-color: #F0F0F0;
+                border-width: 1px;
+            }
+            .layername{
+                position: absolute;
+                bottom: 0;
+                left: 1px;
+                font-size: 11px;
+            }
+            .hide{
+                background-image: url(layer_open.png);
+            }
+            .show{
+                background-image: url(layer_hidden.png);
+            }
+            .properties{
+                background-image: url(layer_properties.png);
+            }
+            .layerMinimap{
+                width: 28px;
+                height: 28px;
+                background-color: white;
+                right: 1px;
+                top: 1px;
+                position: absolute;
+            }
+            #zoomedView{
+                image-rendering: pixelated;
+                margin: 2px;
+                background-color: white;
+            }
+            #cords{
+                font-size: 14px;
+                margin-left: 3px;
+            }
+            .colorChoose{
+                height: 65px;
+            }
+            #R, #G, #B{
+                height: 16px;
+                margin-top: 4px;
+            }
+            .leftarrow, .rightarrow{
+                cursor: pointer;
+                height: 16px;
+                width: 16px;
+            }
+            .leftarrow{
+                background-image: url(leftarrow.png);
+                float: left;
+                background-position: -4px -1px;
+            }
+            .rightarrow{
+                background-image: url(rightarrow.png);
+                float: left;
+                background-position: -1px -1px;
+            }
+            #red, #green, #blue{
+                width: 86px;
+                height: 11px;
+                float: left;
+                cursor: pointer;
+                position: relative;
+            }
+            #rinput, #ginput, #binput{
+                float: right;
+                width: 39px;
+                height: 12px;
+                margin-right: 3px;
+            }
+            .slider{
+                width: 7px;
+                height: 7px;
+                position: absolute;
+                left: -4px;
+                top: 11px;
+                background-image: url(slider_arrow.png);
+            }
+            button:active, button:focus {
+                outline: none !important;
+            }
+            #drawStyle, #colors{
+                width: 48%;
+                height: 60px;
+                display: inline-block;
+                margin-top: 3px;
+                text-align: center;
+                position: relative;
+            }
+            #drawStyle>select{
+                width: 55px;
+                position: absolute;
+                margin-left: -27px;
+            }
+            #patternStyle1{
+                left: 13px;
+                height: 32px;
+            }
+            .listbut{
+                height: 100%;
+                width: 18px;
+                float: right;
+                background-color: lightgray;
+            }
+            .listlist{
+                height: 100%;
+                width: 32px;
+                float: left;
+            }
+            .listlist>div:first-child{
+                visibility: visible!important;
+            }
+            .listlist>div{
+                cursor: pointer;
+            }
+            #patternStyle2{
+                height: 20px;
+                top: 38px;
+                left: 13px;
+            }
+            #activeColors{
+                width: 57px;
+                height: 57px;
+                position: absolute;
+                right: 4px;
+                top: 4px;
+                background-color: white;
+                border: 1px solid black;
+            }
+            #colorsnstyle{
+                width: 100%;
+                position: relative;
+            }
+            #colorContainer{
+                width: 100%;
+                height: 100%;
+                position: relative
+            }
+            #mainColor{
+                width: 29px;
+                height: 29px;
+                z-index: 6;
+                border: 2px solid black;
+                top: 5px;
+                left: 3px;
+                position: absolute;
+            }
+            #X{
+                width: 12px;
+                height: 12px;
+                top: 35px;
+                left: 8px;
+                position: absolute;
+                font-size: 13px;
+                cursor: pointer;
+            }
+            #addColor{
+                width: 29px;
+                height: 29px;
+                z-index: 5;
+                border: 1px solid black;
+                top: 19px;
+                left: 21px;
+                position: absolute;
+            }
+            .visible{
+                visibility: visible;
+            }
+            .hidden{
+                visibility: hidden;
+            }
+            #hideChat{
+                width: 16px;
+                height: 16px;
+                position: absolute;
+                background-color: #FACB5C;
+                right: 5px;
+                text-align: center;
+                line-height: 12px;
+                cursor: pointer;
+                font-weight: bold;
+            }
+            .halfPanel{
+                width: 100%;
+                height: 50%;
+            }
+            #topPanel{
+                border-bottom: 1px solid #A0A0A0;
+            }
+            .tool{
+                background-image: url(tools.png);
+                width: 22px;
+                height: 22px;
+                margin-left: 1px;
+                float: left;
+                border-bottom: 1px solid #F0F0F0;
+                border-right: 1px solid #F0F0F0;
+                border-left: 1px solid #F0F0F0;
+                border-top: 1px solid #F0F0F0;
+            }
+            .tool:hover{
+                border-top: 1px solid white;
+                border-left: 1px solid white;
+                border-right: 1px solid #A0A0A0;
+                border-bottom: 1px solid #A0A0A0;
+                cursor: pointer;
+            }
+            .chosen, .button:active{
+                border-bottom: 1px solid white;
+                border-right: 1px solid white;
+                border-left: 1px solid #A0A0A0;
+                border-top: 1px solid #A0A0A0;
+                background-color: #F0F0F0;
+                cursor: pointer;   
+            }
+            .chosen:hover{
+                background-color: lightgray;
+                border-bottom: 1px solid white;
+                border-right: 1px solid white;
+                border-left: 1px solid #A0A0A0;
+                border-top: 1px solid #A0A0A0;
+            }
+            #toolPen{
+                background-position: 41px 41px
+            }
+            #toolMove{
+                background-position: 105px 41px
+            }
+            #toolFill{
+                background-position: 63px 19px
+            }
+            #toolPipette{
+                background-position: 41px 62px
+            }
+            #toolGrid{
+                background-position: -1px -44px
+            }
+            #toolLine{
+                background-position: -44px -44px
+            }
+            #toolRect{
+                background-position: -66px -22px
+            }
+            #toolCircle{
+                background-position: -1px -22px
+            }
+            #toolPaste{
+                background-position: 20px -24px
+            }
+            #toolLayerAdd{
+                background-position: -22px 0px
+            }
+            #toolLayerRemove{
+                background-position: -1px -1px
+            }
+            #toolLayerDown{
+                background-position: -65px -1px
+            }
+            .listpos{
+                border: 2px solid gray;
+                width: 50px;
+                position: absolute;
+                z-index: 99;
+            }
+            .sixteen>div{
+                width: 16px;
+                height: 16px;
+                margin-left: 8px;
+                margin-top: 2px;
+            }
+            #layerSettings, #createLayerBanner{
+                z-index: 228;
+                background-color: #C0C0C0;
+                border: 1px solid #A0A0A0;
+                font-family: 'hermes', arial;
+                width: 300px;
+                height: 300px;
+                color: gray;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                margin: -150px 0 0 -150px; 
+            }
+            #createLayerBanner{
+                width: 500px;
+                margin: -150px 0 0 -250px; 
+            }
+            .horizontalHalf{
+                width: 50%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                display: inline-block;
+                position: absolute;
+                text-align: center;
+            }
+            .right{
+                right: 0;
+            }
+            .settingblock{
+                height: 30px;
+                width: 100%;
+                position: relative;
+                line-height: 30px;
+            }
+            button{
+                background-color: #F0F0F0;
+                border-width: 1px;
+                padding: 2px;
+            }
+            #pastingImage{
+                image-rendering: pixelated;
+                position: absolute;
+            }
+</style>
+<script src="zeroTimeout.js">
+</script>
+<script src="floodFill.js">
+</script>
+<body>
+    <img alt="tori el" id="hi" src="tori.png" style="pointer-events: none;position: absolute; bottom: 0;width: 99px;"/>
+    <div class="big" id="waitPos">
+        <div id="waitBody">
+            <h1>
+                Загрузка...
+            </h1>
+        </div>
+    </div>
+    <div id="workspace">
+        <div id="art">
+            <div id="grid">
+            </div>
+            <div id="artZoom">
+                <div id="artMove">
+                </div>
+            </div>
+        </div>
+        <div id="topPanel">
+            <div class="halfPanel" id="topInstruments">
+                <div class="tool chosen" id="toolPen">
+                </div>
+                <div class="tool" id="toolMove">
+                </div>
+                <div class="tool" id="toolFill">
+                </div>
+                <div class="tool" id="toolPipette">
+                </div>
+                <div class="button tool" id="toolGrid">
+                </div>
+                <div class="tool" id="toolLine">
+                </div>
+                <div class="tool" id="toolRect">
+                </div>
+                <div class="tool" id="toolCircle">
+                </div>
+                <div class="button tool" id="toolPaste">
+                </div>
+            </div>
+            <div class="halfPanel" id="bottomInstruments">
+                <div class="button tool" id="toolLayerAdd">
+                </div>
+                <div class="button tool" id="toolLayerRemove">
+                </div>
+                <div class="button tool" id="toolLayerDown">
+                </div>
+            </div>
+        </div>
+        <div id="leftPanel">
+            <div class="side">
+                <div id="layers">
+                </div>
+                <div class="bottomHr">
+                </div>
+                <img alt="preview" src="zoom_preview_pattern.png" style="position: absolute; margin: 2px"/>
+                <canvas height="113" id="zoomedView" width="160">
+                </canvas>
+                <div id="cordsPanel">
+                    <div id="cords">
+                        X: Y:
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="rightPanel">
+            <div class="side">
+                <div id="colorsnstyle">
+                    <div id="drawStyle">
+                        <div class="listpos" id="patternStyle1">
+                            <div class="listlist">
+                            </div>
+                            <button class="listbut">
+                                ⯆
+                            </button>
+                        </div>
+                        <div class="listpos" id="patternStyle2">
+                            <div class="listlist sixteen">
+                                <div class="hidden" data-id="1">
+                                    <img alt="" src="fillstyle1.png"/>
+                                </div>
+                                <div class="hidden" data-id="2">
+                                    <img alt="" src="fillstyle2.png"/>
+                                </div>
+                            </div>
+                            <button class="listbut">
+                                ⯆
+                            </button>
+                        </div>
+                    </div>
+                    <div id="activeColors">
+                        <div id="colorContainer">
+                            <div id="mainColor" style="background-color: white;">
+                            </div>
+                            <div id="X">
+                                x
+                            </div>
+                            <div id="addColor">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bottomHr">
+                </div>
+                <div>
+                    RGB
+                </div>
+                <div class="colorChoose" id="RGB">
+                    <div id="R">
+                        <button class="leftarrow" id="Rleft">
+                        </button>
+                        <div id="red">
+                            <div class="slider">
+                            </div>
+                        </div>
+                        <button class="rightarrow" id="Rright">
+                        </button>
+                        <input id="rinput" max="255" min="0" type="number" value="0">
+                        </input>
+                    </div>
+                    <div id="G">
+                        <button class="leftarrow" id="Gleft">
+                        </button>
+                        <div id="green">
+                            <div class="slider">
+                            </div>
+                        </div>
+                        <button class="rightarrow" id="Gright">
+                        </button>
+                        <input id="ginput" max="255" min="0" type="number" value="0">
+                        </input>
+                    </div>
+                    <div id="B">
+                        <button class="leftarrow" id="Bleft">
+                        </button>
+                        <div id="blue">
+                            <div class="slider">
+                            </div>
+                        </div>
+                        <button class="rightarrow" id="Bright">
+                        </button>
+                        <input id="binput" max="255" min="0" type="number" value="0">
+                        </input>
+                    </div>
+                </div>
+                <div class="bottomHr">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="chooseBoardPos">
+        <div id="chooseBody">
+            <div id="exist">
+                <select id="selectBase" name="selectBase">
+                </select>
+                <button id="agaButton">
+                    Ага
+                </button>
+            </div>
+            <div id="create">
+                <table id="createTable">
+                    <tr>
+                        <td>
+                            <input id="chooseName" type="text">
+                            </input>
+                        </td>
+                        <td>
+                            Название
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input id="chooseWid" type="number" value="500">
+                            </input>
+                        </td>
+                        <td>
+                            Ширина
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input id="chooseHei" type="number" value="500">
+                            </input>
+                        </td>
+                        <td>
+                            Высота
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button id="createNew">
+                                Создать новый арт!
+                            </button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="big" id="nickQuery">
+        <div id="nickQueryContainer">
+            <div style="height: 50%;text-align: center;">
+                <div style="line-height: 50px;">
+                    <h2>
+                        Выбери свой ник
+                    </h2>
+                </div>
+            </div>
+            <div style="height: 50%">
+                <div style="line-height: 50px;text-align: center;">
+                    <input id="nickSumbit" type="text">
+                    </input>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="chatPos">
+        <div id="hideChat">
+            -
+        </div>
+        <div id="log">
+            <div id="logbd" style="margin: 3px">
+            </div>
+        </div>
+        <div id="send">
+            <table style="border-collapse: collapse;width: 350px;">
+                <tbody style="display: table-row-group;vertical-align: middle;border-color: inherit;">
+                    <tr>
+                        <td>
+                            <input id="sendVal" style="border-radius: 5px;width: 98%;line-height: 20px;border-radius: 0 0 0 5px;" type="text">
+                            </input>
+                        </td>
+                        <td>
+                            <button id="sendButton" style="width: 100%;height: 23px;border-radius: 5px;background-color: #343135;border-color: #727272;border-bottom-color: #999;border-right-color: #999;color: lightgray;padding: 0;font-weight: bold;border-radius: 0 0 5px;">
+                                Отпр
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="hidden" id="layerSettings">
+        <div class="settingblock">
+            <div class="horizontalHalf">
+                Name
+            </div>
+            <div class="horizontalHalf right" id="layerSettingName">
+                Main
+            </div>
+        </div>
+        <div class="settingblock">
+            <div class="horizontalHalf">
+                Opacity
+            </div>
+            <div class="horizontalHalf right">
+                <input id="layerSettingOpac" max="1" min="0" step="0.01" type="range">
+                </input>
+            </div>
+        </div>
+        <div class="settingblock">
+            <div class="horizontalHalf">
+                Hidden
+            </div>
+            <div class="horizontalHalf right">
+                <input id="layerSettingToggle" type="checkbox">
+                </input>
+            </div>
+        </div>
+        <div class="settingblock">
+        </div>
+        <div class="settingblock">
+        </div>
+    </div>
+    <div class="hidden" id="createLayerBanner">
+        <div class="settingblock">
+            <div class="horizontalHalf">
+                Имя (НЕЛЬЗЯ ИЗМЕНИТЬ)
+            </div>
+            <div class="horizontalHalf right">
+                <input id="createLayerBannerName" type="text">
+                </input>
+            </div>
+        </div>
+        <div class="settingblock">
+            <div class="horizontalHalf">
+                Подтвердить
+            </div>
+            <div class="horizontalHalf right">
+                <button id="createLayerBannerConfirmButton">
+                    Da
+                </button>
+            </div>
+        </div>
+        <div class="settingblock">
+        </div>
+        <div class="settingblock">
+        </div>
+    </div>
+    <script src="app.js">
+    </script>
+</body>
